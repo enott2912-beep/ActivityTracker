@@ -32,15 +32,15 @@ This project was created as a **final project for CS50**.
 
 ## Project Structure
 ActivityTracker/
-├── app.py
-├── config.py
-├── handlers/
-├── services/
-├── db/
-├── utils/
-├── .env.example
-├── .gitignore
-└── README.md
+- ├── app.py
+- ├── config.py
+- ├── handlers/
+- ├── services/
+- ├── db/
+- ├── utils/
+- ├── .env.example
+- ├── .gitignore
+- └── README.md
 
 ---
 
