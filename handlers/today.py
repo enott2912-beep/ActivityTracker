@@ -12,5 +12,5 @@ async def today_command_handler(message: aiogram.types.Message):
         await message.answer("На сегодня задач нет.")
         return
     
-    tasks_list = "\n".join([f"- {t[0]}" for t in tasks])
+    tasks_list = "\n".join([f"{t[0]}. {t[1]}" for t in tasks])
     await message.answer(f"Задачи на сегодня:\n{tasks_list}")

@@ -1,6 +1,6 @@
 import aiogram
 from config import BOT_TOKEN
-from handlers import start, help, add, today
+from handlers import start, help, add, today, done
 import asyncio
 
 bot = aiogram.Bot(token=BOT_TOKEN)
@@ -11,6 +11,7 @@ def setup(dp: aiogram.Dispatcher):
     dp.include_router(help.router)
     dp.include_router(add.router)
     dp.include_router(today.router)
+    dp.include_router(done.router)
 
 
 async def main(dp: aiogram.Dispatcher):

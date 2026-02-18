@@ -1,14 +1,19 @@
-from services import task
-import aiogram
+from aiogram import Router, types
+from aiogram.filters import Command
+from services.task import add_task
 
-router = aiogram.Router()
+router = Router()
 
-@router.message(aiogram.filters.Command("add"))
-async def add_task_handler(message: aiogram.types.Message):
-    user_id = message.from_user.id
-    task_text = message.text.replace("/add", "").strip()
-    if not task_text:
-        await message.answer("Пожалуйста, укажите задачу после команды /add.")
+@router.message(Command("add"))
+async def add_command_handler(message: types.Message):
+    parts = message.text.split(maxsplit=2)
+    
+    if len(parts) < 3:
+        await message.answer("Пожалуйста, укажите категорию и задачу.\nПример: /add sport Пробежка 5 км")
         return
-    task.add_task(user_id, task_text)
-    await message.answer(f"Задача \"{task_text}\" добавлена в список на сегодня.")
+
+    category = parts[1]
+    task_text = parts[2]
+    
+    add_task(message.from_user.id, category, task_text)
+    await message.answer(f"Добавлена активность в категорию '{category}': {task_text}")
