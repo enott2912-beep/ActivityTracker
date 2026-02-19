@@ -15,6 +15,6 @@ async def done_command_handler(message: types.Message):
     user_id = message.from_user.id
 
     if done_task(user_id, task_id):
-        await message.answer(f"Задача {task_id} отмечена как выполненная.")
+        await message.answer(f"✅ Задача {task_id} выполнена! Отличная работа! 🎉")
     else:
-        await message.answer(f"Задача с ID {task_id} не найдена или уже выполнена.")
+        await message.answer(f"⚠️ Задача с ID {task_id} не найдена или уже выполнена.")

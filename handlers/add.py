@@ -15,5 +15,15 @@ async def add_command_handler(message: types.Message):
     category = parts[1]
     task_text = parts[2]
     
-    add_task(message.from_user.id, category, task_text)
-    await message.answer(f"Добавлена активность в категорию '{category}': {task_text}")
+
+    category_map = {
+        "спорт": "sport",
+        "sport": "sport",
+        "учеба": "study",
+        "study": "study"
+    }
+    
+    db_category = category_map.get(category.lower(), category)
+    
+    add_task(message.from_user.id, db_category, task_text)
+    await message.answer(f"🆕 Добавлена активность в категорию '{db_category}':\n📌 {task_text}")
