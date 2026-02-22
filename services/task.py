@@ -30,6 +30,13 @@ def done_task(user_id, task_id):
         conn.commit()
         return cur.rowcount > 0
 
+def delete_task(user_id, task_id):
+    with sqlite3.connect(DB_PATH) as conn:
+        cur = conn.cursor()
+        cur.execute('DELETE FROM tasks WHERE user_id = ? AND id = ?', (user_id, task_id))
+        conn.commit()
+        return cur.rowcount > 0
+
 def task_stats(user_id):
     with sqlite3.connect(DB_PATH) as conn:
         cur = conn.cursor()
