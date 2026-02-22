@@ -13,8 +13,10 @@ async def today_command_handler(message: aiogram.types.Message):
         return
     
     tasks_list = []
+    i = 1
     for t in tasks:
         status = "✅" if t[2] else "     "
-        tasks_list.append(f"{status} {t[0]}. {t[1]}")
+        tasks_list.append(f"{status} {i}. {t[1]}")
+        i += 1
     
     await message.answer(f"📅 Задачи на сегодня:\n" + "\n".join(tasks_list))

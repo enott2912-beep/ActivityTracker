@@ -20,7 +20,7 @@ def get_tasks(user_id):
 def get_today_tasks(user_id):
     with sqlite3.connect(DB_PATH) as conn:
         cur = conn.cursor()
-        cur.execute("SELECT id, text, is_done FROM tasks WHERE user_id = ? AND date(created_at) = date('now', 'localtime')", (user_id,))
+        cur.execute("SELECT id, text, is_done FROM tasks WHERE user_id = ? AND date(created_at) = date('now', 'localtime') ORDER BY id", (user_id,))
         return cur.fetchall()
 
 def done_task(user_id, task_id):
