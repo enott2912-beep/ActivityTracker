@@ -13,7 +13,8 @@ CREATE TABLE IF NOT EXISTS tasks(
     text TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_done BOOLEAN DEFAULT FALSE,
-    category TEXT
+    category TEXT,
+    date DATE DEFAULT (date('now', 'localtime'))
 )''')
 conn.commit()
 conn.close()

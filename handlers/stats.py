@@ -14,7 +14,7 @@ async def stats_text_handler(message: types.Message):
 
 async def show_stats(message_obj, user_id):
     try:
-        total_tasks, done_tasks, by_category, progress = task_stats(user_id)
+        total_tasks, done_tasks, by_category, progress, overdue_count = task_stats(user_id)
         if total_tasks == 0:
             await message_obj.answer("📭 У вас пока нет задач.")
             return
@@ -22,7 +22,8 @@ async def show_stats(message_obj, user_id):
         category_text = ""
         display_map = {
             "sport": "🏋🏼‍♀️ Спорт",
-            "study": "👨‍🎓 Учеба"
+            "study": "👨‍🎓 Учеба",
+            "other": "📁 Другое"
         }
 
         for cat, count in by_category:
@@ -30,6 +31,14 @@ async def show_stats(message_obj, user_id):
             display_name = display_map.get(key, f"📁 {cat}")
             category_text += f"{display_name}: {count}\n"
 
-        await message_obj.answer(f"📊 Статистика:\n\n📝 Всего задач: {total_tasks}\n✅ Выполнено: {done_tasks}\n📈 Прогресс: {progress:.1f}%\n\n{category_text}")
+        stats_text = (
+            f"📊 Статистика:\n\n"
+            f"📝 Всего задач: {total_tasks}\n"
+            f"✅ Выполнено: {done_tasks}\n"
+            f"😥 Просрочено: {overdue_count}\n"
+            f"📈 Прогресс: {progress:.1f}%\n\n"
+            f"{category_text}"
+        )
+        await message_obj.answer(stats_text)
     except Exception as e:
         await message_obj.answer(f"⚠️ Произошла ошибка при получении статистики:\n{e}")

@@ -1,7 +1,8 @@
 from aiogram import Router, types, F
 from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from services.task import done_task, get_today_tasks, delete_task
+from services.task import done_task, delete_task, get_today_tasks
+import aiogram
 
 router = Router()
 
@@ -37,16 +38,21 @@ async def done_callback_handler(callback: types.CallbackQuery):
     if done_task(user_id, task_id):
         await callback.answer("Отлично! Задача выполнена.")
         
-        tasks = get_today_tasks(user_id)
-        builder = InlineKeyboardBuilder()
-        for t in tasks:
-            status = "✅" if t[2] else "     "
-            builder.row(
-                types.InlineKeyboardButton(text=f"{status} {t[1]}", callback_data=f"done_{t[0]}"),
-                types.InlineKeyboardButton(text="❌", callback_data=f"del_{t[0]}")
-            )
-        
-        await callback.message.edit_reply_markup(reply_markup=builder.as_markup())
+        # Обновляем клавиатуру, не перерисовывая весь список
+        current_keyboard = callback.message.reply_markup.inline_keyboard
+        for row in current_keyboard:
+            # Предполагаем, что кнопка для выполнения - первая в ряду
+            task_button = row[0]
+            if task_button.callback_data == callback.data:
+                # Обновляем текст кнопки, добавляя галочку
+                if not task_button.text.startswith("✅"):
+                    task_button.text = "✅ " + task_button.text.lstrip()
+                break
+        try:
+            await callback.message.edit_reply_markup(reply_markup=callback.message.reply_markup)
+        except aiogram.exceptions.TelegramBadRequest:
+            # Сообщение не изменено (например, повторное нажатие)
+            pass
     else:
         await callback.answer("Задача уже выполнена или не найдена.", show_alert=True)
 
@@ -57,24 +63,13 @@ async def delete_callback_handler(callback: types.CallbackQuery):
 
     if delete_task(user_id, task_id):
         await callback.answer("Задача удалена.")
-        # Просто удаляем сообщение, если задач больше нет, или обновляем список
-        # Для простоты вызовем обновление списка, но так как мы внутри callback, 
-        # проще всего перерисовать клавиатуру или удалить сообщение, если список пуст.
-        # Здесь мы просто удалим текущее сообщение и пришлем новый список (или обновим текущий).
-        # Самый простой способ обновить UI - удалить строку. Но edit_reply_markup требует полного списка.
-        # Поэтому перерисовываем:
-        
-        tasks = get_today_tasks(user_id)
-        if not tasks:
-            await callback.message.edit_text("📅 На сегодня задач больше нет.")
+        current_keyboard = callback.message.reply_markup.inline_keyboard
+        new_keyboard_rows = [row for row in current_keyboard if row[1].callback_data != callback.data]
+
+        if not new_keyboard_rows:
+            await callback.message.edit_text("Задач в этом списке больше нет.")
         else:
-            builder = InlineKeyboardBuilder()
-            for t in tasks:
-                status = "✅" if t[2] else "     "
-                builder.row(
-                    types.InlineKeyboardButton(text=f"{status} {t[1]}", callback_data=f"done_{t[0]}"),
-                    types.InlineKeyboardButton(text="❌", callback_data=f"del_{t[0]}")
-                )
-            await callback.message.edit_reply_markup(reply_markup=builder.as_markup())
+            new_markup = InlineKeyboardBuilder(markup=new_keyboard_rows)
+            await callback.message.edit_reply_markup(reply_markup=new_markup.as_markup())
     else:
         await callback.answer("Ошибка удаления.", show_alert=True)

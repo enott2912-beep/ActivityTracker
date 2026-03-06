@@ -14,6 +14,12 @@ async def today_command_handler(message: aiogram.types.Message):
 async def today_text_handler(message: aiogram.types.Message):
     await show_today_tasks(message, message.from_user.id)
 
+@router.callback_query(F.data == "view_today")
+async def view_today_callback_handler(callback: types.CallbackQuery):
+    await show_today_tasks(callback.message, callback.from_user.id)
+    await callback.message.delete()
+    await callback.answer()
+
 async def show_today_tasks(message_obj, user_id):
     tasks = task.get_today_tasks(user_id)
     if not tasks:
