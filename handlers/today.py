@@ -27,12 +27,12 @@ async def show_today_tasks(message_obj, user_id):
         return
     
     builder = InlineKeyboardBuilder()
-    for t in tasks:
-        # t[0]=id, t[1]=text, t[2]=is_done
-        status = "✅" if t[2] else "     "
+    for t_id, t_text, t_is_done, t_time in tasks:
+        status = "✅" if t_is_done else "     "
+        time_str = f" ({t_time})" if t_time else ""
         builder.row(
-            types.InlineKeyboardButton(text=f"{status} {t[1]}", callback_data=f"done_{t[0]}"),
-            types.InlineKeyboardButton(text="❌", callback_data=f"del_{t[0]}")
+            types.InlineKeyboardButton(text=f"{status} {t_text}{time_str}", callback_data=f"done_{t_id}"),
+            types.InlineKeyboardButton(text="❌", callback_data=f"del_{t_id}")
         )
     
     await message_obj.answer("📅 Ваши задачи (нажмите, чтобы выполнить):", reply_markup=builder.as_markup())

@@ -1,11 +1,13 @@
 import datetime
-from aiogram import Router, types, F
+from aiogram import Router, types, F, Bot
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from services.task import add_task
+from services.task import add_task, set_reminder_job_id
 from handlers.start import get_main_keyboard
+from scheduler import scheduler
+from scheduler import send_task_reminder
 
 router = Router()
 
@@ -29,17 +31,16 @@ async def category_chosen(callback: types.CallbackQuery, state: FSMContext):
     category = callback.data.split("_")[1]
     await state.update_data(category=category)
     
-    await callback.message.edit_text(f"Категория: {category}.\n✍️ Напишите задачу и дату (например: Сдать отчет 25.10):")
+    await callback.message.edit_text(f"Категория: {category}.\n✍️ Напишите задачу. Дату и время можно указать в конце (например: Сдать отчет 25.10 15:30):")
     await state.set_state(AddTask.waiting_for_text)
     await callback.answer()
 
 @router.message(AddTask.waiting_for_text)
-async def task_text_chosen(message: types.Message, state: FSMContext):
+async def task_text_chosen(message: types.Message, state: FSMContext, bot: Bot):
     if not message.text:
         await message.answer("Пожалуйста, отправьте текстовое сообщение.")
         return
     
-    # Если пользователь ввел команду (например /start), отменяем добавление
     if message.text.startswith("/"):
         await message.answer("Ввод задачи отменен, так как была введена команда.", reply_markup=get_main_keyboard())
         await state.clear()
@@ -47,27 +48,56 @@ async def task_text_chosen(message: types.Message, state: FSMContext):
 
     user_data = await state.get_data()
     category = user_data['category']
-    full_text = message.text.strip()
-    task_text = full_text
+    
+    parts = message.text.strip().split()
+    task_text_parts = []
     task_date = None
+    task_time = None
 
-    parts = full_text.split()
-    if len(parts) > 1:
-        possible_date = parts[-1]
-        for fmt in ("%d.%m.%Y", "%d-%m-%Y", "%Y-%m-%d", "%d.%m"):
+    for part in reversed(parts):
+        if task_time is None:
             try:
-                dt = datetime.datetime.strptime(possible_date, fmt)
-                if fmt == "%d.%m":
-                    dt = dt.replace(year=datetime.datetime.now().year)
-                task_date = dt.strftime("%Y-%m-%d")
-                task_text = " ".join(parts[:-1])
-                break
+                task_time = datetime.datetime.strptime(part, "%H:%M").time()
+                continue
             except ValueError:
                 pass
+        
+        if task_date is None:
+            for fmt in ("%d.%m.%Y", "%d.%m"):
+                try:
+                    dt = datetime.datetime.strptime(part, fmt)
+                    if fmt == "%d.%m":
+                        dt = dt.replace(year=datetime.datetime.now().year)
+                    task_date = dt.date()
+                    break
+                except ValueError:
+                    pass
+            if task_date:
+                continue
+        
+        task_text_parts.insert(0, part)
 
-    add_task(message.from_user.id, category, task_text, task_date)
+    task_text = " ".join(task_text_parts)
+
+    if task_time and not task_date:
+        task_date = datetime.date.today()
+
+    date_db = task_date.strftime("%Y-%m-%d") if task_date else None
+    time_db = task_time.strftime("%H:%M") if task_time else None
+
+    task_id = add_task(message.from_user.id, category, task_text, date_db, time_db)
+
+    if task_id and task_date and task_time:
+        reminder_dt = datetime.datetime.combine(task_date, task_time) - datetime.timedelta(hours=1)
+        if reminder_dt > datetime.datetime.now():
+            job_id = f"task_{task_id}"
+            scheduler.add_job(send_task_reminder, 'date', run_date=reminder_dt,
+                              args=[bot, message.from_user.id, task_id, task_text],
+                              id=job_id, replace_existing=True)
+            set_reminder_job_id(task_id, job_id)
     
-    date_str = task_date if task_date else "Сегодня"
-    await message.answer(f"✅ Задача добавлена!\n📂 Категория: {category}\n📝 {task_text}\n📅 Дата: {date_str}", reply_markup=get_main_keyboard())
+    date_str = task_date.strftime('%d.%m.%Y') if task_date else "Сегодня"
+    time_str = f"\n⏰ Время: {time_db}" if time_db else ""
+    await message.answer(f"✅ Задача добавлена!\n📂 Категория: {category}\n📝 {task_text}\n📅 Дата: {date_str}{time_str}", reply_markup=get_main_keyboard())
     
     await state.clear()

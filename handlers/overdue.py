@@ -22,9 +22,10 @@ async def show_overdue_tasks(message_obj, user_id):
         return
 
     builder = InlineKeyboardBuilder()
-    for t_id, t_text, t_is_done, t_date in tasks:
+    for t_id, t_text, t_is_done, t_date, t_time in tasks:
+        time_str = f" {t_time}" if t_time else ""
         builder.row(
-            types.InlineKeyboardButton(text=f"{t_date[5:]}: {t_text}", callback_data=f"done_{t_id}"),
+            types.InlineKeyboardButton(text=f"{t_date[5:]}{time_str}: {t_text}", callback_data=f"done_{t_id}"),
             types.InlineKeyboardButton(text="❌", callback_data=f"del_{t_id}")
         )
 
