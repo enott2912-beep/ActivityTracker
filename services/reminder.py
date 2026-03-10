@@ -8,7 +8,10 @@ DB_PATH = os.path.join(BASE_DIR, 'db', 'activitytracker.db')
 def get_today_active_tasks(user_id):
     with sqlite3.connect(DB_PATH) as conn:
         cur = conn.cursor()
-        cur.execute("SELECT id, text, is_done FROM tasks WHERE user_id = ? AND (date = date('now', 'localtime') OR date IS NULL) AND is_done = 0 ORDER BY id", (user_id,))
+        cur.execute("""SELECT id, text, is_done FROM tasks
+                       WHERE user_id = ? AND is_done = 0 AND
+                             (date = date('now', 'localtime') OR (date IS NULL AND date(created_at, 'localtime') = date('now', 'localtime')))
+                       ORDER BY id""", (user_id,))
         return cur.fetchall()
 
 def get_all_user_ids():

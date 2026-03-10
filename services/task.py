@@ -22,13 +22,15 @@ def get_tasks(user_id):
 def get_today_tasks(user_id):
     with sqlite3.connect(DB_PATH) as conn:
         cur = conn.cursor()
-        cur.execute("SELECT id, text, is_done, time FROM tasks WHERE user_id = ? AND (date = date('now', 'localtime') OR date IS NULL) ORDER BY time, id", (user_id,))
+        cur.execute("""SELECT id, text, is_done, time FROM tasks
+                       WHERE user_id = ? AND (date = date('now', 'localtime') OR (date IS NULL AND date(created_at, 'localtime') = date('now', 'localtime')))
+                       ORDER BY time, id""", (user_id,))
         return cur.fetchall()
 
 def done_task(user_id, task_id):
     with sqlite3.connect(DB_PATH) as conn:
         cur = conn.cursor()
-        cur.execute('UPDATE tasks SET is_done = 1 WHERE user_id = ? AND id = ? AND is_done = 0', (user_id, task_id))
+        cur.execute('UPDATE tasks SET is_done = 1, done_at = datetime("now") WHERE user_id = ? AND id = ? AND is_done = 0', (user_id, task_id))
         conn.commit()
         return cur.rowcount > 0
 
@@ -82,3 +84,44 @@ def set_reminder_job_id(task_id, job_id):
         cur = conn.cursor()
         cur.execute('UPDATE tasks SET reminder_job_id = ? WHERE id = ?', (job_id, task_id))
         conn.commit()
+
+def get_completed_task_dates(user_id):
+    """Возвращает отсортированный список уникальных дат (YYYY-MM-DD), когда были выполнены задачи."""
+    with sqlite3.connect(DB_PATH) as conn:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT DISTINCT date(done_at, 'localtime')
+            FROM tasks
+            WHERE user_id = ? AND is_done = 1 AND done_at IS NOT NULL
+            ORDER BY date(done_at, 'localtime') DESC
+        """, (user_id,))
+        return [row[0] for row in cur.fetchall()]
+
+def calculate_streak(user_id):
+    """Вычисляет текущий стрик (серию последовательных дней с выполненными задачами)."""
+    completed_dates_str = get_completed_task_dates(user_id)
+    if not completed_dates_str:
+        return 0
+
+    completed_dates = [datetime.date.fromisoformat(d) for d in completed_dates_str]
+
+    today = datetime.date.today()
+    yesterday = today - datetime.timedelta(days=1)
+
+    # Стрик продолжается, если последняя задача была выполнена сегодня или вчера.
+    if completed_dates[0] not in [today, yesterday]:
+        return 0
+
+    streak = 1
+    last_date = completed_dates[0]
+    # Проверяем остальные даты
+    for i in range(1, len(completed_dates)):
+        expected_previous_date = last_date - datetime.timedelta(days=1)
+        if completed_dates[i] == expected_previous_date:
+            streak += 1
+            last_date = completed_dates[i]
+        else:
+            # Последовательность прервалась
+            break
+
+    return streak

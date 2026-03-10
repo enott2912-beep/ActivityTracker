@@ -27,7 +27,8 @@ def setup_database():
             category TEXT,
             date DATE,
             time TIME,
-            reminder_job_id TEXT
+            reminder_job_id TEXT,
+            done_at TIMESTAMP        
         )''')
         conn.commit()
         print(f"База данных '{db_path}' и таблица 'tasks' успешно созданы/проверены.")

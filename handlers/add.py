@@ -79,10 +79,14 @@ async def task_text_chosen(message: types.Message, state: FSMContext, bot: Bot):
 
     task_text = " ".join(task_text_parts)
 
+    date_str = task_date.strftime('%d.%m.%Y') if task_date else "Сегодня"
+
     if task_time and not task_date:
         task_date = datetime.date.today()
+    if not task_date:
+        task_date = datetime.date.today()
 
-    date_db = task_date.strftime("%Y-%m-%d") if task_date else None
+    date_db = task_date.strftime("%Y-%m-%d")
     time_db = task_time.strftime("%H:%M") if task_time else None
 
     task_id = add_task(message.from_user.id, category, task_text, date_db, time_db)
@@ -96,7 +100,6 @@ async def task_text_chosen(message: types.Message, state: FSMContext, bot: Bot):
                               id=job_id, replace_existing=True)
             set_reminder_job_id(task_id, job_id)
     
-    date_str = task_date.strftime('%d.%m.%Y') if task_date else "Сегодня"
     time_str = f"\n⏰ Время: {time_db}" if time_db else ""
     await message.answer(f"✅ Задача добавлена!\n📂 Категория: {category}\n📝 {task_text}\n📅 Дата: {date_str}{time_str}", reply_markup=get_main_keyboard())
     

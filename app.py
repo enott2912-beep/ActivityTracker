@@ -19,6 +19,7 @@ def setup_routers(dp: aiogram.Dispatcher):
     dp.include_router(stats.router)
 
 
+
 async def main(dp: aiogram.Dispatcher):
     setup_routers(dp)
 
