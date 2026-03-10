@@ -1,9 +1,6 @@
 import sqlite3
-import os
 import datetime
-
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.join(BASE_DIR, 'db', 'activitytracker.db')
+from config import DB_PATH
 
 def add_task(user_id, category, task, date=None, time=None):
     with sqlite3.connect(DB_PATH) as conn:
@@ -12,12 +9,6 @@ def add_task(user_id, category, task, date=None, time=None):
                     (user_id, task, category, date, time))
         conn.commit()
         return cur.lastrowid
-
-def get_tasks(user_id):
-    with sqlite3.connect(DB_PATH) as conn:
-        cur = conn.cursor()
-        cur.execute('SELECT id, text, is_done, date FROM tasks WHERE user_id = ?', (user_id,))
-        return cur.fetchall()
 
 def get_today_tasks(user_id):
     with sqlite3.connect(DB_PATH) as conn:

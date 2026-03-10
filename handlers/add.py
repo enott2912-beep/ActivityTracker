@@ -16,6 +16,7 @@ class AddTask(StatesGroup):
     waiting_for_text = State()
 
 @router.message(F.text == "➕ Добавить задачу")
+@router.message(Command("add"))
 async def start_add_process(message: types.Message, state: FSMContext):
     builder = InlineKeyboardBuilder()
     builder.button(text="🏋🏼‍♀️ Спорт", callback_data="cat_sport")

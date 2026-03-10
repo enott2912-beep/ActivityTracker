@@ -1,9 +1,6 @@
 import sqlite3
-import os
 import datetime
-
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.join(BASE_DIR, 'db', 'activitytracker.db')
+from config import DB_PATH
 
 def get_today_active_tasks(user_id):
     with sqlite3.connect(DB_PATH) as conn:

@@ -1,7 +1,7 @@
 from aiogram import Router, types, F
 from aiogram.filters import Command
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 from services.task import get_overdue_tasks
+from utils.display import show_task_list, format_dated_task
 
 router = Router()
 
@@ -16,17 +16,11 @@ async def view_overdue_callback_handler(callback: types.CallbackQuery):
     await callback.answer()
 
 async def show_overdue_tasks(message_obj, user_id):
-    tasks = get_overdue_tasks(user_id)
-    if not tasks:
-        await message_obj.answer("👍 Просроченных задач нет. Так держать!")
-        return
-
-    builder = InlineKeyboardBuilder()
-    for t_id, t_text, t_is_done, t_date, t_time in tasks:
-        time_str = f" {t_time}" if t_time else ""
-        builder.row(
-            types.InlineKeyboardButton(text=f"{t_date[5:]}{time_str}: {t_text}", callback_data=f"done_{t_id}"),
-            types.InlineKeyboardButton(text="❌", callback_data=f"del_{t_id}")
-        )
-
-    await message_obj.answer("😥 Ваши просроченные задачи (нажмите, чтобы выполнить):", reply_markup=builder.as_markup())
+    await show_task_list(
+        message_obj=message_obj,
+        tasks_func=get_overdue_tasks,
+        user_id=user_id,
+        title="😥 Ваши просроченные задачи (нажмите, чтобы выполнить):",
+        empty_message="👍 Просроченных задач нет. Так держать!",
+        formatter_func=format_dated_task
+    )
