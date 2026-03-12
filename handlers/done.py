@@ -2,7 +2,6 @@ from aiogram import Router, types, F
 from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from services.task import done_task, delete_task, get_today_tasks, get_task
-import aiogram
 from scheduler import scheduler
 from apscheduler.jobstores.base import JobLookupError
 
@@ -60,7 +59,7 @@ async def done_callback_handler(callback: types.CallbackQuery):
                 break
         try:
             await callback.message.edit_reply_markup(reply_markup=callback.message.reply_markup)
-        except aiogram.exceptions.TelegramBadRequest:
+        except Exception: 
             pass
     else:
         await callback.answer("Задача уже выполнена или не найдена.", show_alert=True)

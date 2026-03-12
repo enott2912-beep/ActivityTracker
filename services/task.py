@@ -116,3 +116,62 @@ def calculate_streak(user_id):
             break
 
     return streak
+
+def get_user_activity_summary(user_id):
+    """
+    Собирает сводную информацию по активности пользователя.
+    Возвращает словарь с общим количеством задач, выполненными задачами,
+    статистикой по категориям выполненных задач и полным списком задач.
+    """
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+
+        # Общая статистика
+        cur.execute("""
+            SELECT
+                COUNT(*) AS total_tasks,
+                SUM(CASE WHEN is_done = 1 THEN 1 ELSE 0 END) AS done_tasks
+            FROM tasks
+            WHERE user_id = ?
+        """, (user_id,))
+        summary = cur.fetchone()
+        total_tasks = summary['total_tasks'] if summary else 0
+        done_tasks = summary['done_tasks'] if summary and summary['done_tasks'] is not None else 0
+
+        # Статистика по категориям (только выполненные)
+        cur.execute("""
+            SELECT category, COUNT(*) as count
+            FROM tasks
+            WHERE user_id = ? AND is_done = 1
+            GROUP BY category
+        """, (user_id,))
+        categories_raw = cur.fetchall()
+        categories = {row['category']: row['count'] for row in categories_raw}
+
+        # Список всех задач
+        cur.execute("SELECT text, is_done FROM tasks WHERE user_id = ?", (user_id,))
+        tasks_raw = cur.fetchall()
+        tasks = [{'text': row['text'], 'is_done': bool(row['is_done'])} for row in tasks_raw]
+
+        return {
+            'total_tasks': total_tasks,
+            'done_tasks': done_tasks,
+            'categories': categories,
+            'tasks': tasks
+        }
+
+def get_today_active_tasks(user_id):
+    with sqlite3.connect(DB_PATH) as conn:
+        cur = conn.cursor()
+        cur.execute("""SELECT id, text, is_done FROM tasks
+                       WHERE user_id = ? AND is_done = 0 AND
+                             (date = date('now', 'localtime') OR (date IS NULL AND date(created_at, 'localtime') = date('now', 'localtime')))
+                       ORDER BY id""", (user_id,))
+        return cur.fetchall()
+
+def get_all_user_ids():
+    with sqlite3.connect(DB_PATH) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT DISTINCT user_id FROM tasks")
+        return [item[0] for item in cur.fetchall()]

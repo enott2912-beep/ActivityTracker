@@ -8,7 +8,8 @@ async def show_task_list(message_obj: types.Message,
                          user_id: int,
                          title: str,
                          empty_message: str,
-                         formatter_func: Callable[[Any], str]):
+                         formatter_func: Callable[[Any], str],
+                         extra_buttons: List[types.InlineKeyboardButton] = None):
     """
     Универсальная функция для отображения списка задач с кнопками.
     """
@@ -25,6 +26,9 @@ async def show_task_list(message_obj: types.Message,
             types.InlineKeyboardButton(text=text, callback_data=f"done_{task_id}"),
             types.InlineKeyboardButton(text="❌", callback_data=f"del_{task_id}")
         )
+
+    if extra_buttons:
+        builder.row(*extra_buttons)
 
     await message_obj.answer(title, reply_markup=builder.as_markup())
 

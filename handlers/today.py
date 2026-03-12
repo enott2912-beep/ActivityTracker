@@ -20,11 +20,15 @@ async def view_today_callback_handler(callback: types.CallbackQuery):
     await callback.answer()
 
 async def show_today_tasks(message_obj, user_id):
+    # Кнопка для запуска анализа прямо из списка задач
+    analyze_btn = types.InlineKeyboardButton(text="🧠 AI Анализ", callback_data="analyze_productivity")
+    
     await show_task_list(
         message_obj=message_obj,
         tasks_func=task.get_today_tasks,
         user_id=user_id,
         title="📅 Ваши задачи (нажмите, чтобы выполнить):",
         empty_message="📅 На сегодня задач нет. Отдыхайте! 🏖",
-        formatter_func=format_today_task
+        formatter_func=format_today_task,
+        extra_buttons=[analyze_btn]
     )

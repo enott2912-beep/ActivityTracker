@@ -1,10 +1,8 @@
 import logging
 from aiogram import Bot
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from services.reminder import get_all_user_ids, get_today_active_tasks
-from services.task import get_task
-logging.basicConfig()
-logging.getLogger('apscheduler').setLevel(logging.INFO)
+from services.task import get_task, get_all_user_ids, get_today_active_tasks
+
 
 scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
 
