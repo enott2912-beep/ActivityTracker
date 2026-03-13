@@ -13,11 +13,11 @@ async def stats_text_handler(message: types.Message):
     await show_stats(message, message.from_user.id)
 
 def _get_streak_motivation(streak: int) -> str:
-    """Возвращает мотивационное сообщение в зависимости от длины стрика."""
+    """Returns a motivational message based on streak length."""
     if streak == 0:
         return ""
 
-    # Форматирование слова "день"
+    # Russian pluralization for "day"
     if streak % 10 == 1 and streak % 100 != 11:
         day_word = "день"
     elif 2 <= streak % 10 <= 4 and (streak % 100 < 10 or streak % 100 >= 20):
@@ -41,8 +41,8 @@ def _get_streak_motivation(streak: int) -> str:
 
 async def show_stats(message_obj, user_id):
     try:
-        total_tasks, done_tasks, by_category, progress, overdue_count = task_stats(user_id)
-        streak = calculate_streak(user_id)
+        total_tasks, done_tasks, by_category, progress, overdue_count = await task_stats(user_id)
+        streak = await calculate_streak(user_id)
         if total_tasks == 0:
             await message_obj.answer("📭 У вас пока нет задач.")
             return

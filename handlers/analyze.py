@@ -6,16 +6,16 @@ from services.ai_service import analyze_productivity
 router = Router()
 
 async def run_analysis(message_obj: types.Message, user_id: int):
-    """Общая функция для запуска анализа (из команды или кнопки)."""
-    # 1. Получаем статистику
-    summary_data = get_user_activity_summary(user_id)
-    streak = calculate_streak(user_id)
+    """Common function to run analysis (from command or button)."""
+    # 1. Get statistics
+    summary_data = await get_user_activity_summary(user_id)
+    streak = await calculate_streak(user_id)
 
     if not summary_data or summary_data['total_tasks'] == 0:
         await message_obj.answer("📊 У вас еще нет задач для анализа. Добавьте несколько и попробуйте снова!")
         return
 
-    # Дополняем данные для AI
+    # Enrich data for AI
     data_for_ai = {
         "total_tasks": summary_data['total_tasks'],
         "done_tasks": summary_data['done_tasks'],
@@ -24,11 +24,11 @@ async def run_analysis(message_obj: types.Message, user_id: int):
         "streak": streak,
     }
 
-    # 2. Отправляем в AI
+    # 2. Send to AI
     msg = await message_obj.answer("⏳ Анализирую вашу продуктивность... Подождите немного.")
     analysis_text = await analyze_productivity(data_for_ai)
 
-    # 3. Выводим ответ
+    # 3. Output response
     response_text = (
         "📊 Анализ продуктивности\n\n"
         f"{analysis_text}"

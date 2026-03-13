@@ -90,7 +90,7 @@ async def task_text_chosen(message: types.Message, state: FSMContext, bot: Bot):
     date_db = task_date.strftime("%Y-%m-%d")
     time_db = task_time.strftime("%H:%M") if task_time else None
 
-    task_id = add_task(message.from_user.id, category, task_text, date_db, time_db)
+    task_id = await add_task(message.from_user.id, category, task_text, date_db, time_db)
 
     if task_id and task_date and task_time:
         reminder_dt = datetime.datetime.combine(task_date, task_time) - datetime.timedelta(hours=1)
@@ -99,7 +99,7 @@ async def task_text_chosen(message: types.Message, state: FSMContext, bot: Bot):
             scheduler.add_job(send_task_reminder, 'date', run_date=reminder_dt,
                               args=[bot, message.from_user.id, task_id, task_text],
                               id=job_id, replace_existing=True)
-            set_reminder_job_id(task_id, job_id)
+            await set_reminder_job_id(task_id, job_id)
     
     time_str = f"\n⏰ Время: {time_db}" if time_db else ""
     await message.answer(f"✅ Задача добавлена!\n📂 Категория: {category}\n📝 {task_text}\n📅 Дата: {date_str}{time_str}", reply_markup=get_main_keyboard())

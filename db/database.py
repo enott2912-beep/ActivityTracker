@@ -1,40 +1,34 @@
-import sqlite3
+import aiosqlite
+import asyncio
 import os
 from config import DB_PATH
 
-def setup_database():
+async def setup_database():
     """
-    Инициализирует базу данных: создает директорию и файл БД,
-    а также таблицу 'tasks', если они не существуют.
+    Initializes the database: creates directory, DB file, and 'tasks' table if not exists.
     """
     base_dir = os.path.dirname(DB_PATH)
     os.makedirs(base_dir, exist_ok=True)
 
-    conn = None
     try:
-        conn = sqlite3.connect(DB_PATH)
-        cur = conn.cursor()
-
-        cur.execute('''
-        CREATE TABLE IF NOT EXISTS tasks(
-            id INTEGER PRIMARY KEY,
-            user_id INTEGER NOT NULL,
-            text TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            is_done BOOLEAN DEFAULT FALSE,
-            category TEXT,
-            date DATE,
-            time TIME,
-            reminder_job_id TEXT,
-            done_at TIMESTAMP        
-        )''')
-        conn.commit()
-        print(f"База данных '{DB_PATH}' и таблица 'tasks' успешно созданы/проверены.")
-    except sqlite3.Error as e:
-        print(f"Произошла ошибка SQLite: {e}")
-    finally:
-        if conn:
-            conn.close()
+        async with aiosqlite.connect(DB_PATH) as conn:
+            await conn.execute('''
+            CREATE TABLE IF NOT EXISTS tasks(
+                id INTEGER PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                text TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                is_done BOOLEAN DEFAULT FALSE,
+                category TEXT,
+                date DATE,
+                time TIME,
+                reminder_job_id TEXT,
+                done_at TIMESTAMP        
+            )''')
+            await conn.commit()
+            print(f"Database '{DB_PATH}' and table 'tasks' verified/created.")
+    except Exception as e:
+        print(f"DB Error: {e}")
 
 if __name__ == "__main__":
-    setup_database()
+    asyncio.run(setup_database())

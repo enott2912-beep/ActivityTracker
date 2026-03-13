@@ -11,9 +11,9 @@ async def show_task_list(message_obj: types.Message,
                          formatter_func: Callable[[Any], str],
                          extra_buttons: List[types.InlineKeyboardButton] = None):
     """
-    Универсальная функция для отображения списка задач с кнопками.
+    Universal function to display a list of tasks with buttons.
     """
-    tasks = tasks_func(user_id)
+    tasks = await tasks_func(user_id)
     if not tasks:
         await message_obj.answer(empty_message)
         return
@@ -34,7 +34,7 @@ async def show_task_list(message_obj: types.Message,
 
 
 def format_today_task(task_data: tuple) -> str:
-    """Форматирует текст для задачи из списка 'на сегодня'."""
+    """Formats text for 'today' tasks."""
     _t_id, t_text, t_is_done, t_time = task_data
     status = "✅" if t_is_done else "     "
     time_str = f" ({t_time})" if t_time else ""
@@ -42,7 +42,7 @@ def format_today_task(task_data: tuple) -> str:
 
 
 def format_dated_task(task_data: tuple) -> str:
-    """Форматирует текст для просроченной или предстоящей задачи."""
+    """Formats text for overdue or upcoming tasks."""
     _t_id, t_text, _t_is_done, t_date, t_time = task_data
     time_str = f" {t_time}" if t_time else ""
     return f"{t_date[5:]}{time_str}: {t_text}"
